@@ -2,7 +2,7 @@
 #define NCNN_LAYER_FACTORY_H
 
 #include <functional>
-#include <map>
+#include <unordered_map>
 
 #include "layer.h"
 #include "layers/absval.h"

@@ -51,8 +51,8 @@ int main(){
 
   Net net{};
 
-  net.load_param("/mnt/c/Users/lenovo/Desktop/Code/Tiny-ncnn/model/alexnet.param");
-  net.load_model("/mnt/c/Users/lenovo/Desktop/Code/Tiny-ncnn/model/alexnet.bin");
+  net.load_param("/home/linaro/workspace/Tiny-ncnn/model/alexnet.param");
+  net.load_model("/home/linaro/workspace/Tiny-ncnn/model/alexnet.bin");
   Extractor extractor = net.create_extractor();
   extractor.input("data", m);
 
