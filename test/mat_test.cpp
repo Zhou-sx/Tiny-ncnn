@@ -1,4 +1,7 @@
 #include <iostream>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include "mat.h"
 #include "tools.h"
@@ -45,5 +48,18 @@ int main(){
 
     std::vector<Mat> v = {m, m2, m3};
     const std::vector<Mat>& v2 = v;
+
+    // 利用opencv读图像转换为mat
+    cv::Mat img_bgr = cv::imread("/home/linaro/workspace/Tiny-ncnn/img/plane.jpg"), img_rgb;
+    cv::cvtColor(img_bgr, img_rgb, cv::COLOR_BGR2RGB);
+    cv::Mat img_resize;
+    cv::resize(img_rgb, img_resize, {227,227});
+    
+    if(!img_resize.isContinuous()){
+        std::cout << "img is not Continuous." << std::endl;
+        exit(-1);
+    }
+    Mat img = from_rgb_pixels(img_resize.data, 227, 227);
+    pretty_print(img.channel(0));
 
 }

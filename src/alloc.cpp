@@ -18,7 +18,7 @@ void* Alloc::allocate(size_t size){
         return ::operator new(size, std::align_val_t{NCNN_MALLOC_ALIGN});
     #else
         u_char* ptr = (u_char *)::operator new(size + sizeof(void*) + NCNN_MALLOC_ALIGN);
-        u_char** data = (u_char **)alignPtr((u_char *)ptr + 1, NCNN_MALLOC_ALIGN); 
+        u_char** data = (u_char **)alignPtr((u_char **)ptr + 1, NCNN_MALLOC_ALIGN); 
         assert(reinterpret_cast<uintptr_t>(data) % NCNN_MALLOC_ALIGN == 0);
 
         // 为什么要用指向指针的指针呢 方便数组索引 因为data[-1]放的是一个指针

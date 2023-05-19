@@ -254,6 +254,24 @@ Mat Mat::reshape(Shape _shape, size_t _dims){
 }
 
 /*
+    归一化
+*/
+void Mat::substract_mean_normalize(const float* mean_vals, const float* norm_vals){
+    for (int i = 0; i < c; i++){
+        float mean = mean_vals[i];
+        float norm = norm_vals[i];
+        Mat m_i = this->channel(i);
+        float* data_i = static_cast<float*>(m_i.data);
+
+        for(int j = 0; j < c_step; j++){
+            *data_i -=  mean;
+            *data_i *= norm;
+            data_i++;
+        }
+    }
+}
+
+/*
     复用 Padding Layer 给Mat四周填充
 */
 void copy_make_border(const Mat& src, Mat& dst, int top, int bottom, int left, int right, float v)
@@ -268,6 +286,33 @@ void copy_make_border(const Mat& src, Mat& dst, int top, int bottom, int left, i
     dst = output[0];
 
     delete padding;
+}
+
+
+/*
+    用opencv中的Mat 生成 tiny_ncnn中的Mat
+*/
+Mat from_rgb_pixels(const unsigned char* pixels, int w, int h){
+    Mat m({w, h, 1, 3}, 3, 4);
+
+    float* ptr0 = m.channel(0);
+    float* ptr1 = m.channel(1);
+    float* ptr2 = m.channel(2);
+
+    for (int y = 0; y < h; y++)
+    {
+        for(int x = 0; x < w; x++){
+            *ptr0 = pixels[0];
+            *ptr1 = pixels[1];
+            *ptr2 = pixels[2];
+
+            pixels += 3;
+            ptr0++;
+            ptr1++;
+            ptr2++;
+        }
+    }
+    return m;
 }
 
 

@@ -1,4 +1,4 @@
-#include "mat.h"
+#include "../src/mat.h"
 #include <cstdio>
 
 void pretty_print(const tiny_ncnn::Mat& m)

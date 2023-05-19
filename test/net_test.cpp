@@ -1,4 +1,7 @@
 #include <iostream>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include "net.h"
 #include "layer_factory.h"
@@ -41,20 +44,22 @@ Layer* make_layer(int layer_type, vector<int> _bottoms, vector<int> _tops){
 }
 
 int main(){
-  Mat m({227, 227, 1, 3}, 3, 4);
-  Mat m1 = m.channel(0);
-  m1.fill(0.0f);
-  Mat m2 = m.channel(1);
-  m2.fill(1.0f);
-  Mat m3 = m.channel(2);
-  m3.fill(1.0f);
+  // 图像输入
+  cv::Mat img_bgr = cv::imread("/home/linaro/workspace/Tiny-ncnn/img/plane.jpg"), img_rgb;
+  cv::cvtColor(img_bgr, img_rgb, cv::COLOR_BGR2RGB);
+  cv::Mat img_resize;
+  cv::resize(img_rgb, img_resize, {227,227});
+  Mat img = from_rgb_pixels(img_resize.data, 227, 227);
+  float mean[3] = { 128.f, 128.f, 128.f };
+  float norm[3] = { 1/128.f, 1/128.f, 1/128.f };
+  img.substract_mean_normalize(mean, norm);
 
   Net net{};
 
   net.load_param("/home/linaro/workspace/Tiny-ncnn/model/alexnet.param");
   net.load_model("/home/linaro/workspace/Tiny-ncnn/model/alexnet.bin");
   Extractor extractor = net.create_extractor();
-  extractor.input("data", m);
+  extractor.input("data", img);
 
   Mat out;
   extractor.extract("prob", out);

@@ -97,6 +97,9 @@ public:
     }
 
 public:
+    void substract_mean_normalize(const float* mean_vals, const float* norm_vals);
+
+public:
     // 数据指针
     void* data;
 
@@ -123,6 +126,10 @@ public:
 };
 
 void copy_make_border(const Mat& src, Mat& dst, int top, int bottom, int left, int right, float v);
+
+Mat from_rgb_pixels(const unsigned char* pixels, int w, int h);
+
+
 
 }
 
