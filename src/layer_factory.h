@@ -18,6 +18,7 @@
 #include "layers/dropout.h"
 #include "layers/convolutiondepthwise.h"
 #include "layers/softmax.h"
+#include "layers/packing.h"
 
 namespace tiny_ncnn{
 

@@ -15,7 +15,8 @@ std::unordered_map<std::string, int> layer_name_to_index ={
     {"Pooling",9},
     {"ConvolutionDepthWise", 10},
     {"InnerProduct", 11},
-    {"Softmax", 12}
+    {"Softmax", 12},
+    {"Packing", 13}
 };
 
 // 工厂模式
@@ -32,8 +33,8 @@ std::function<Layer*(void*)> layer_registry[128] ={
     Pooling_layer_creator,
     ConvolutionDepthWise_layer_creator,
     InnerProduct_layer_creator,
-    Softmax_layer_creator
-
+    Softmax_layer_creator,
+    Packing_layer_creator
 };
 
 int layer_to_index(const std::string& type){

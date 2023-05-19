@@ -60,6 +60,6 @@ int main(){
         exit(-1);
     }
     Mat img = from_rgb_pixels(img_resize.data, 227, 227);
-    pretty_print(img.channel(0));
+    // pretty_print(img.channel(0));
 
 }

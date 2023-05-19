@@ -20,7 +20,8 @@ public:
     // Mat(Mat&& rhs);
     // Mat operator=(Mat && rhs);
     
-    Mat(Shape _shape, size_t _dims, size_t _elemsize, Alloc* p_alloc = nullptr);
+    Mat(Shape _shape, size_t _dims, size_t _elemsize, size_t _elempack = 1);
+    
     /*
         根据已有的Mat取其部分构造新的Mat
         子部分的生命周期完全取决与大的 
@@ -111,6 +112,8 @@ public:
     
     // elemsize 元素大小
     size_t elemsize;
+    // elempack pack个数
+    size_t elempack;
 
     // 形状
     Shape shape;

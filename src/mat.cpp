@@ -44,17 +44,15 @@ Mat Mat::clone() const{
     return m;
 }
 
-Mat::Mat(Shape _shape, size_t _dims, size_t _elemsize, Alloc* p_alloc): 
-    shape(_shape), elemsize(_elemsize), allocator(p_alloc), data(nullptr), count(nullptr){
+Mat::Mat(Shape _shape, size_t _dims, size_t _elemsize, size_t _elempack): 
+    shape(_shape), elemsize(_elemsize), elempack(_elempack), data(nullptr), count(nullptr){
     check_shape(shape, _dims);
-    if(p_alloc == nullptr){
-        allocator = new Alloc();
-    }
+    allocator = new Alloc();
     create_buffer(_shape, _dims, elemsize);
 }
 
-Mat::Mat(const Mat& rhs):shape(rhs.shape), c_step(rhs.c_step), dims(rhs.dims),
-elemsize(rhs.elemsize), allocator(rhs.allocator), data(rhs.data), count(rhs.count){
+Mat::Mat(const Mat& rhs):shape(rhs.shape), c_step(rhs.c_step), dims(rhs.dims),elemsize(rhs.elemsize),
+elempack(rhs.elempack), allocator(rhs.allocator), data(rhs.data), count(rhs.count){
     w = rhs.w;
     if(count != nullptr){
         *count += 1;
