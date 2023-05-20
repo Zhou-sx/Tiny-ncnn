@@ -27,7 +27,7 @@ public:
         子部分的生命周期完全取决与大的 
         所以 count = nullptr
     */
-    Mat(Shape _shape, size_t _dims, void* _data, size_t _elemsize, Alloc* p_alloc = nullptr);
+    Mat(Shape _shape, size_t _dims, void* _data, size_t _elemsize, size_t _elempack, Alloc* p_alloc = nullptr);
     
     ~Mat() { release();}
 
@@ -78,11 +78,11 @@ public:
     }
 
     // reshape 浅拷贝
-    Mat reshape(Shape _shape, size_t _dims);
+    Mat reshape(Shape _shape, size_t _dims) const;
 
 public:
     // 开辟长度为n的一段内存
-    void create_buffer(Shape _shape, size_t _dims, size_t _elemsize);
+    void create_buffer(Shape _shape, size_t _dims, size_t _elemsize, size_t _elempack);
     // 释放内存
     void release();
 
@@ -133,6 +133,11 @@ void copy_make_border(const Mat& src, Mat& dst, int top, int bottom, int left, i
 Mat from_rgb_pixels(const unsigned char* pixels, int w, int h);
 
 
+float RandomFloat(float a = -1.2f, float b = 1.2f);
+
+void Randomize(Mat& m, float a = -1.2f, float b = 1.2f);
+
+Mat RandomMat(Shape _shape, size_t _dims, float a = -1.2f, float b = 1.2f);
 
 }
 

@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "innerproduct.h"
+#include "packing.h"
 #include "mat.h"
 #include "paramdict.h"
 #include "../tools.h"
@@ -10,29 +11,51 @@ using namespace tiny_ncnn;
 
 
 int main(){
-    Mat m({3, 3, 1, 1}, 2, 4);
-    m.fill(1.0f);
+    /*
+        a: 16
+        b: 16 x 32
+        c: 32
+    */
+    Mat a = RandomMat({16, 1, 1, 1}, 1);
+    Mat b = RandomMat({16, 32, 1, 1}, 2);
+    std::cout << "a:" << std::endl;
+    pretty_print(a);
+    std::cout << "b:" << std::endl;
+    pretty_print(b);
 
-
-    Layer* p = InnerProduct_layer_creator();
-
-    FILE* f = fopen("/mnt/c/Users/lenovo/Desktop/Code/Tiny-ncnn/model/innerproduct.param", "rb");
-    const DataReader dr = DataReader(f);
-
+    // pack
+    Layer* p_pack = Packing_layer_creator();
     ParamDict param;
-    param.load_param(dr);
+    param.set(0, 4);
+    p_pack->load_param(param);
+    
+    Mat b_pack;
+    std::vector<Mat> v1 = {b};
+    std::vector<Mat> v2 = {b_pack};
+    p_pack->forward(v1, v2);
+    b_pack = v2[0];
+    
+    std::cout << "b_pack:" << std::endl;
+    pretty_print(b_pack);
 
-    (dynamic_cast<InnerProduct*>(p))->set_model();
-    p->load_param(param);
+    Layer* p_inner = InnerProduct_layer_creator();
 
-    Mat m4;
-    std::vector<Mat> input = {m};
-    std::vector<Mat> output = {m4};
-    p->forward(input, output);
+    ParamDict param_inner;
+    param_inner.set(0, 32);       // c_out
+    param_inner.set(1, 0);        // bias_term
+    param_inner.set(2, 16 * 32);  // weight_data_size
+    p_inner->load_param(param_inner);
 
-    m4 = output[0]; // 回写 否则m2不更新
-    std::cout << "m value after Conv: " << std::endl;
-    pretty_print(m4.channel(0));
+    dynamic_cast<InnerProduct*>(p_inner)->weight_data_pack = b_pack;
+
+    Mat c;
+    std::vector<Mat> input = {a};
+    std::vector<Mat> output = {c};
+    p_inner->forward(input, output);
+
+    c = output[0]; // 回写 否则m2不更新
+    std::cout << "c: " << std::endl;
+    pretty_print(c);
 
     return 0;
 }

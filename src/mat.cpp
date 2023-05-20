@@ -1,4 +1,6 @@
 #include <cstring>
+#include <assert.h>
+#include <stdlib.h>
 
 #include "mat.h"
 #include "platform.h"
@@ -29,7 +31,7 @@ void Mat::check_shape(Shape& shape, int dims){
 }
 
 Mat Mat::clone() const{
-    Mat m(shape, dims, elemsize);
+    Mat m(shape, dims, elemsize, elempack);
     if(c_step == m.c_step){
         memcpy(m.data, data, total() * elemsize);
     }
@@ -45,10 +47,10 @@ Mat Mat::clone() const{
 }
 
 Mat::Mat(Shape _shape, size_t _dims, size_t _elemsize, size_t _elempack): 
-    shape(_shape), elemsize(_elemsize), elempack(_elempack), data(nullptr), count(nullptr){
+    shape(_shape), data(nullptr), count(nullptr){
     check_shape(shape, _dims);
     allocator = new Alloc();
-    create_buffer(_shape, _dims, elemsize);
+    create_buffer(_shape, _dims, _elemsize, _elempack);
 }
 
 Mat::Mat(const Mat& rhs):shape(rhs.shape), c_step(rhs.c_step), dims(rhs.dims),elemsize(rhs.elemsize),
@@ -59,8 +61,8 @@ elempack(rhs.elempack), allocator(rhs.allocator), data(rhs.data), count(rhs.coun
     }
 }
 
-Mat::Mat(Shape _shape, size_t _dims, void* _data, size_t _elemsize, Alloc* p_alloc)
-    : shape(_shape), dims(_dims), elemsize(_elemsize), allocator(p_alloc), data(_data), count(nullptr)
+Mat::Mat(Shape _shape, size_t _dims, void* _data, size_t _elemsize, size_t _elempack, Alloc* p_alloc)
+    : shape(_shape), dims(_dims), elemsize(_elemsize), elempack(_elempack), allocator(p_alloc), data(_data), count(nullptr)
 {
     check_shape(shape, _dims);
     const auto [_w, _h, _d, _c] = shape;
@@ -68,16 +70,16 @@ Mat::Mat(Shape _shape, size_t _dims, void* _data, size_t _elemsize, Alloc* p_all
     switch (_dims)
     {
     case 4:
-        c_step = alignSize(_w*_h*_d*_elemsize, 16) / _elemsize;
+        c_step = alignSize(_w*_h*_d*_elemsize, 16) / _elemsize * _elempack;
         break;
     case 3:
-        c_step = alignSize(_w*_h*_elemsize, 16) / _elemsize;
+        c_step = alignSize(_w*_h*_elemsize, 16) / _elemsize * _elempack;
         break;
     case 2:
-        c_step = _w * _h;
+        c_step = _w * _h * _elempack;
         break;
     case 1:
-        c_step = _w;
+        c_step = _w * _elempack;
         break;
     }
 }
@@ -95,6 +97,7 @@ Mat& Mat::operator=(const Mat& rhs){
     c_step = rhs.c_step;
     dims = rhs.dims;
     elemsize = rhs.elemsize;
+    elempack = rhs.elempack;
     allocator = rhs.allocator;
     data = rhs.data;
     count = rhs.count;
@@ -105,7 +108,10 @@ Mat& Mat::operator=(const Mat& rhs){
     return *this;
 }
 
-void Mat::create_buffer(Shape _shape, size_t _dims, size_t _elemsize){
+/*
+    _elemsize: 是pack后的大小 不需要再乘elempack
+*/
+void Mat::create_buffer(Shape _shape, size_t _dims, size_t _elemsize, size_t _elempack){
     // c++ 17
     check_shape(_shape, _dims);
     const auto [_w, _h, _d, _c] = _shape;
@@ -115,6 +121,7 @@ void Mat::create_buffer(Shape _shape, size_t _dims, size_t _elemsize){
     release();
 
     elemsize = _elemsize;
+    elempack = _elempack;
     dims = _dims;
     w = _w;
     h = _h;
@@ -125,16 +132,16 @@ void Mat::create_buffer(Shape _shape, size_t _dims, size_t _elemsize){
     switch (_dims)
     {
     case 4:
-        c_step = alignSize(_w*_h*_d*_elemsize, 16) / _elemsize;
+        c_step = alignSize(_w*_h*_d*_elemsize, 16) / _elemsize * _elempack;
         break;
     case 3:
-        c_step = alignSize(_w*_h*_elemsize, 16) / _elemsize;
+        c_step = alignSize(_w*_h*_elemsize, 16) / _elemsize * _elempack;
         break;
     case 2:
-        c_step = _w * _h;
+        c_step = _w * _h * _elempack;
         break;
     case 1:
-        c_step = _w;
+        c_step = _w * _elempack;
         break;
     }
     
@@ -176,18 +183,19 @@ void Mat::release(){
 */
 
 Mat Mat::channel(int c) const{
-    void* ptr =  static_cast<void*> (&static_cast<unsigned char*>(data)[c_step * elemsize * c]);
+    void* ptr =  static_cast<void*> (&static_cast<unsigned char*>(data)[c_step * elemsize / elempack * c]);
     int _d = d; 
-    Mat m(shape, dims-1, ptr, elemsize, allocator);
+    Mat m(shape, dims-1, ptr, elemsize, elempack, allocator);
     if(dims == 4){
-        m.c_step = (size_t)w * h; // 在channel有padding 降一维 没有padding
-        m.c = _d;                 // 4降3需要把 d 和 c 作交换
+        m.c_step = (size_t)w * h * elempack; // 在channel有padding 降一维 没有padding
+        m.c = _d;                            // 4降3需要把 d 和 c 作交换
     }
     return m;
 }
 
 
-Mat Mat::reshape(Shape _shape, size_t _dims){
+Mat Mat::reshape(Shape _shape, size_t _dims) const{
+    // assert(elempack == 1);
     check_shape(_shape, _dims);
     const auto [_w, _h, _d, _c] = _shape;
     // 尺寸不匹配
@@ -198,7 +206,7 @@ Mat Mat::reshape(Shape _shape, size_t _dims){
     if(_dims <= 2){
         // 转换前channel间有padding 先Flatten去掉padding
         if(dims >=3 && c_step != w*h*d){
-            Mat m(_shape, _dims, elemsize);
+            Mat m(_shape, _dims, elemsize, elempack);
             // 每个通道拷贝
             for (int i = 0; i < c; i++)
             {
@@ -220,10 +228,10 @@ Mat Mat::reshape(Shape _shape, size_t _dims){
         switch (_dims)
         {
         case 2:
-            c_step = _w * _h;
+            m.c_step = _w * _h * elempack;
             break;
         case 1:
-            c_step = _w;
+            m.c_step = _w * elempack;
             break;
         }
         return m;
@@ -239,7 +247,7 @@ Mat Mat::reshape(Shape _shape, size_t _dims){
             return m.reshape(_shape, _dims);
         }
         // 转换后有padding 转换前没有padding
-        Mat m(_shape, _dims, elemsize);
+        Mat m(_shape, _dims, elemsize, elempack);
         // 每个通道拷贝
         for (int i = 0; i < _c; i++)
         {
@@ -313,5 +321,33 @@ Mat from_rgb_pixels(const unsigned char* pixels, int w, int h){
     return m;
 }
 
+/*
+    生成随机Mat
+*/
+float RandomFloat(float a, float b){
+    float random = ((float)rand()) / (float)RAND_MAX; //RAND_MAX;
+    float diff = b - a;
+    float r = random * diff;
+    float v = a + r;
+    // generate denormal as zero
+    if (v < 0.0001 && v > -0.0001)
+        v = 0.f;
+    return v;
+}
+
+void Randomize(Mat& m, float a, float b)
+{   
+    for (size_t i = 0; i < m.total(); i++)
+    {
+        m[i] = RandomFloat(a, b);
+    }
+}
+
+Mat RandomMat(Shape _shape, size_t _dims, float a, float b)
+{
+    Mat m(_shape, _dims, 4, 1);
+    Randomize(m, a, b);
+    return m;
+}
 
 }

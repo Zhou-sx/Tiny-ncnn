@@ -32,6 +32,8 @@ public:
 
     // model
     Mat weight_data;
+    Mat weight_data_pack;
+    
     Mat bias_data;
 };
 

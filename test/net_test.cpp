@@ -62,7 +62,7 @@ int main(){
   extractor.input("data", img);
 
   Mat out;
-  extractor.extract("prob", out);
+  extractor.extract("fc6", out);
 
   std::cout << "output value of Net: " << std::endl;
   pretty_print(out.channel(0));

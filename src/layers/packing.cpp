@@ -28,12 +28,6 @@ int Packing::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top
         return 0;
     }
 
-    if (elempack == out_elempack)
-    {
-        top_blob = bottom_blob;
-        return 0;
-    }
-
     bool pack1to4 = elempack == 1 && out_elempack == 4;
     bool pack4to1 = elempack == 4 && out_elempack == 1;
 
@@ -67,8 +61,9 @@ int Packing::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top
         int outh = h * elempack / out_elempack;
         size_t out_elemsize = elemsize / elempack * out_elempack;
 
-        top_blob.create_buffer({w, outh, 1, 1}, 2, out_elemsize);
+        top_blob.create_buffer({w, outh, 1, 1}, 2, out_elemsize, out_elempack);
         top_blob.elempack = out_elempack;
+        top_blob.c_step = w * out_elempack;
         if (top_blob.empty())
             return -100;
 
@@ -186,11 +181,12 @@ int Packing::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top
         int size = w * h * d;
         int outc = channels * elempack / out_elempack;
         size_t out_elemsize = elemsize / elempack * out_elempack;
+        top_blob.c_step = size * out_elempack;
 
         if (dims == 3)
-            top_blob.create_buffer({w, h, 1, outc}, 3, out_elemsize);
+            top_blob.create_buffer({w, h, 1, outc}, 3, out_elemsize, out_elempack);
         else // if (dims == 4)
-            top_blob.create_buffer({w, h, d, outc}, 4, out_elemsize);
+            top_blob.create_buffer({w, h, d, outc}, 4, out_elemsize, out_elempack);
         top_blob.elempack = out_elempack;
 
         if (top_blob.empty())

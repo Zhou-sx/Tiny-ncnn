@@ -16,6 +16,7 @@ int Pooling::load_param(const ParamDict& pd){
     pad_top = pd.get(13, pad_left);
     pad_bottom = pd.get(15, pad_top);
     global_pooling = pd.get(4, 0);
+    return 0;
 }
 
 int Pooling::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs) const{

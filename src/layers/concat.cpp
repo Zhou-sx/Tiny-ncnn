@@ -13,6 +13,7 @@ int Concat::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_
     int d = bottom_blobs[0].d;
     int dims = bottom_blobs[0].dims;
     int elementsize = bottom_blobs[0].elemsize;
+    int elementpack = bottom_blobs[0].elempack;
 
     // total channels
     int top_channels = 0;
@@ -24,7 +25,7 @@ int Concat::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_
 
     Shape shape = {w, h, d, top_channels};
     Mat& top_blob = top_blobs[0];
-    top_blob.create_buffer(shape, dims, elementsize);
+    top_blob.create_buffer(shape, dims, elementsize, elementpack);
     if (top_blob.empty())
         return -1;
 

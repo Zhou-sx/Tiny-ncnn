@@ -8,11 +8,20 @@ void pretty_print(const tiny_ncnn::Mat& m)
         const float* ptr = m.channel(q);
         for (int y=0; y<m.h; y++)
         {
-            for (int x=0; x<m.w; x++)
+            for (int x=0; x<m.w * m.elempack;)
             {
-                printf("%f ", ptr[x]);
+                if(m.elempack == 1){
+                    printf("%.2f ", ptr[x++]);
+                }
+                else{
+                    printf("(");
+                    for(int k=0; k<m.elempack; k++){
+                        printf("%.2f ", ptr[x++]);
+                    }
+                    printf(") ");
+                }
             }
-            ptr += m.w;
+            ptr += m.w * m.elempack;
             printf("\n");
         }
         printf("------------------------\n");
