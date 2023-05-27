@@ -53,8 +53,8 @@ public:
 
     // 强制转换
     template<typename T>
-    operator T*() const{
-        return static_cast<T*>(data);
+    operator T() const{
+        return static_cast<T>(data);
     }
 
     // 只能用在float 谨慎使用

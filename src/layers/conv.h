@@ -12,22 +12,7 @@ public:
     int load_model(const ModelBin&);
 
     int forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs) const;
-    int do_forward(const Mat& bottom_blobs, Mat& top_blobs) const;
-
-
-    void set_model(){
-        weight_data = Mat(Shape(3,3,3,5), 4, 4);
-        int cnt = 0;
-        for(int c=0; c<5; c++){
-            Mat m = weight_data.channel(c);
-            for(int i=0; i<m.total(); i++){
-                m[i] = cnt++; 
-            }
-        }
-
-        bias_data = Mat(Shape(5,1,1,1), 1, 4);
-
-    }
+    int conv_ordinary(const Mat& bottom_blobs, Mat& top_blobs) const;
 
 private:
     int c_out;        // 0
@@ -50,7 +35,7 @@ private:
     int bias_term;    // 5
     int weight_data_size; // 6
 
-
+public:
     // model 
     Mat weight_data;
     Mat bias_data;

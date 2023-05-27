@@ -1,5 +1,8 @@
 #include "conv.h"
+#include "conv3x3s1.h"
 #include <assert.h>
+
+#define __ARM_NEON 1
 
 namespace tiny_ncnn{
 /*
@@ -46,7 +49,7 @@ int Convolution::load_model(const ModelBin& mb){
     bottom_blob: [w_in,  h_in,  c_in]
     top_blob:    [w_out, h_out, c_out]
 */
-int Convolution::do_forward(const Mat& bottom_blob, Mat& top_blob) const{
+int Convolution::conv_ordinary(const Mat& bottom_blob, Mat& top_blob) const{
     const int w = bottom_blob.w;
     const int inch = bottom_blob.c;
 
@@ -136,7 +139,25 @@ int Convolution::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>&
     const int outw = (w - kernel_extent_w) / stride_w + 1;
     const int outh = (h - kernel_extent_h) / stride_h + 1;
     top_blobs[0] = Mat(Shape(outw, outh, 1, c_out), 3, 4);
-    do_forward(bottom_border_blob, top_blobs[0]);
+
+    Mat& bottom_blob = bottom_border_blob;
+    Mat& top_blob = top_blobs[0];
+    
+    #ifdef __ARM_NEON
+    // 定制化conv
+    if(bottom_blob.elempack == 1 && top_blob.elempack == 1){
+        if(kernel_w == 3 && kernel_h == 3 && dilation_w == 1 && dilation_h == 1 ){
+            conv3x3s1_neon(bottom_blob, top_blob, weight_data, bias_data);
+        }
+    }
+    // 通用
+    else{
+        conv_ordinary(bottom_border_blob, top_blobs[0]);
+    }
+    #else
+        conv_ordinary(bottom_border_blob, top_blobs[0]);
+    #endif
+    
 
     return 0;
 }

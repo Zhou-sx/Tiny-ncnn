@@ -36,8 +36,6 @@ int InnerProduct::load_model(const ModelBin& mb){
         std::vector<Mat> v2 = {weight_data_pack};
         p->forward(v1, v2);
         weight_data_pack = v2[0];
-
-
     #endif
 
     if (weight_data.empty())
@@ -104,7 +102,7 @@ int InnerProduct::forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>
     /*
         bottom_blob.dims == 1的特殊情况
     */
-    #ifdef __ARM_NEON
+    #if __ARM_NEON
 
     // flatten 展平
     const Mat bottom_blob_flatten = bottom_blob.reshape({c_in, 1, 1, 1}, 1);
